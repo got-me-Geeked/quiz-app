@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+
+  quizzes      Quiz[]
+  participations QuizParticipant[]
+}
+
+model Quiz {
+  id          String   @id @default(uuid())
+  organizerId String
+  organizer   User     @relation(fields: [organizerId], references: [id])
+  title       String
+  category    String?
+  status      String   @default("waiting") // waiting/active/finished/cancelled
+  roomCode    String?  @unique
+  minPlayers  Int      @default(1)
+  maxPlayers  Int      @default(50)
+  durationSeconds Int
+  createdAt   DateTime @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  questions    Question[]
+  participants QuizParticipant[]
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id])
+  type          String   // text/image/single/multiple
+  content       String
+  imageUrl      String?
+  options       Json?
+  correctAnswer Json
+  orderIndex    Int
+}
+
+model QuizParticipant {
+  id         String   @id @default(uuid())
+  quizId     String
+  quiz       Quiz     @relation(fields: [quizId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  score      Int      @default(0)
+  joinedAt   DateTime @default(now())
+  finishedAt DateTime?
+
+  answers    Answer[]
+}
+
+model Answer {
+  id                String   @id @default(uuid())
+  quizParticipantId String
+  participant       QuizParticipant @relation(fields: [quizParticipantId], references: [id])
+  questionId        String
+  answerValue       Json
+  isCorrect         Boolean
+  pointsAwarded     Int
+  answeredAt        DateTime @default(now())
+}
