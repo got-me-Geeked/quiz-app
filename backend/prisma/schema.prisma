@@ -17,7 +17,7 @@ model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
-  name         String?
+  username     String   @unique
   createdAt    DateTime @default(now())
 
   quizzes      Quiz[]
@@ -30,11 +30,11 @@ model Quiz {
   organizer   User     @relation(fields: [organizerId], references: [id])
   title       String
   category    String?
-  status      String   @default("waiting") // waiting/active/finished/cancelled
+  status      String   @default("draft") // draft/waiting/active/finished/cancelled
   roomCode    String?  @unique
   minPlayers  Int      @default(1)
   maxPlayers  Int      @default(50)
-  durationSeconds Int
+  secondsPerQuestion Int
   createdAt   DateTime @default(now())
   startedAt   DateTime?
   finishedAt  DateTime?
@@ -46,12 +46,13 @@ model Quiz {
 model Question {
   id            String   @id @default(uuid())
   quizId        String
-  quiz          Quiz     @relation(fields: [quizId], references: [id])
-  type          String   // text/image/single/multiple
-  content       String
-  imageUrl      String?
-  options       Json?
-  correctAnswer Json
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  format        String  //текст / картинка
+  answerType    String  //одиночный / множественный
+  content       String? //текст вопроса
+  imageUrl      String? //заглушка загружки (поле имя файла / null)
+  options       Json // [{ id, text }] — всегда есть
+  correctAnswer Json //  массив с id правильных вариантов
   orderIndex    Int
 }
 
@@ -62,10 +63,10 @@ model QuizParticipant {
   userId     String
   user       User     @relation(fields: [userId], references: [id])
   score      Int      @default(0)
-  joinedAt   DateTime @default(now())
   finishedAt DateTime?
 
   answers    Answer[]
+  @@unique([quizId, userId])
 }
 
 model Answer {

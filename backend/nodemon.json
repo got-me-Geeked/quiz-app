@@ -1,0 +1,5 @@
+{
+  "watch": ["index.js", "routes", "socket", "middleware", "prisma/schema.prisma"],
+  "ext": "js,json",
+  "ignore": ["uploads/*", "node_modules/*", "prisma/migrations/*", "*.log"]
+}
